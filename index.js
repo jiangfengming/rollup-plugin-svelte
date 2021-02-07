@@ -1,7 +1,14 @@
 const path = require('path');
 const relative = require('require-relative');
 const { createFilter } = require('@rollup/pluginutils');
-const { compile, preprocess } = require('svelte/compiler');
+const { compile, preprocess, walk } = require('svelte/compiler');
+const { createMakeHot } = require('svelte-hmr');
+const { metrohash64 } = require('metrohash');
+
+let makeHot = (...args) => {
+	makeHot = createMakeHot({ walk });
+	return makeHot(...args);
+};
 
 const PREFIX = '[rollup-plugin-svelte]';
 const pkg_export_errors = new Set();
@@ -12,7 +19,8 @@ const plugin_options = new Set([
 	'extensions',
 	'include',
 	'onwarn',
-	'preprocess'
+	'preprocess',
+	'hot'
 ]);
 
 /**
@@ -42,8 +50,14 @@ module.exports = function (options = {}) {
 		compilerOptions.css = false;
 	}
 
+	let config;
+
 	return {
 		name: 'svelte',
+
+		configResolved(resolvedConfig) {
+			config = resolvedConfig;
+		},
 
 		/**
 		 * Resolve an import's full filepath.
@@ -91,7 +105,7 @@ module.exports = function (options = {}) {
 		 * Transforms a `.svelte` file into a `.js` file.
 		 * NOTE: If `emitCss`, append static `import` to virtual CSS file.
 		 */
-		async transform(code, id) {
+		async transform(code, id, isSSR) {
 			if (!filter(id)) return null;
 
 			const extension = path.extname(id);
@@ -100,6 +114,10 @@ module.exports = function (options = {}) {
 			const dependencies = [];
 			const filename = path.relative(process.cwd(), id);
 			const svelte_options = { ...compilerOptions, filename };
+
+			if (rest.hot) {
+				svelte_options.dev = true;
+			}
 
 			if (rest.preprocess) {
 				const processed = await preprocess(code, rest.preprocess, { filename });
@@ -117,7 +135,13 @@ module.exports = function (options = {}) {
 			});
 
 			if (emitCss && compiled.css.code) {
-				const fname = id.replace(new RegExp(`\\${extension}$`), '.css');
+				const hash = Buffer.from(metrohash64(compiled.css.code), 'hex')
+					.toString('base64')
+					.replace(/\//g, '_')
+					.replace(/\+/g, '-')
+					.replace(/=/g, '');
+
+				const fname = '/' + path.relative(config.root, id).replace(/\\/g, '/') + '.css?v=' + hash;
 				compiled.js.code += `\nimport ${JSON.stringify(fname)};\n`;
 				cache_emit.set(fname, compiled.css);
 			}
@@ -126,6 +150,23 @@ module.exports = function (options = {}) {
 				dependencies.forEach(this.addWatchFile);
 			} else {
 				compiled.js.dependencies = dependencies;
+			}
+
+			if (rest.hot && !isSSR) {
+				compiled.js.code = makeHot({
+					id,
+					compiledCode: compiled.js.code,
+
+					hotOptions: {
+						preserveLocalState: true,
+						...rest.hot,
+						noOverlay: true
+					},
+
+					compiled,
+					originalCode: code,
+					compileOptions: svelte_options,
+				});
 			}
 
 			return compiled.js;

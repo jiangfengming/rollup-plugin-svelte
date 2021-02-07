@@ -7,6 +7,8 @@ type Arrayable<T> = T | T[];
 type WarningHandler = (warning: RollupWarning | string) => void;
 
 interface Options {
+  hot: boolean | Record<string, unknown>;
+
   /** One or more minimatch patterns */
   include: Arrayable<string>;
 

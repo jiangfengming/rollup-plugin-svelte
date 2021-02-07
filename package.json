@@ -25,20 +25,22 @@
     "node": ">=10"
   },
   "dependencies": {
+    "@rollup/pluginutils": "^4.1.0",
+    "metrohash": "^2.6.0",
     "require-relative": "^0.8.7",
-    "@rollup/pluginutils": "^4.1.0"
+    "svelte-hmr": "^0.12.5"
   },
   "peerDependencies": {
-    "svelte": ">=3.5.0",
-    "rollup": ">=2.0.0"
+    "rollup": ">=2.38.5",
+    "svelte": ">=3.32.1"
   },
   "devDependencies": {
-    "eslint": "^7.14.0",
+    "eslint": "^7.19.0",
     "rollup": "^2.33.3",
     "sander": "^0.6.0",
     "source-map": "^0.7.3",
     "svelte": "^3.30.0",
-    "uvu": "^0.4.1"
+    "uvu": "^0.5.1"
   },
   "keywords": [
     "svelte",
