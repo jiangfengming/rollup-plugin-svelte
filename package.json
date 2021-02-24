@@ -1,13 +1,13 @@
 {
   "version": "7.1.0",
-  "name": "rollup-plugin-svelte",
-  "description": "Compile Svelte components with Rollup",
-  "repository": "sveltejs/rollup-plugin-svelte",
+  "name": "vite-plugin-svelte-ssr-hot",
+  "description": "Compile Svelte components with Vite",
+  "repository": "https://github.com/jiangfengming/vite-plugin-svelte-ssr-hot",
   "types": "index.d.ts",
   "main": "index.js",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/sveltejs/rollup-plugin-svelte/issues"
+    "url": "https://github.com/jiangfengming/vite-plugin-svelte-ssr-hot/issues"
   },
   "files": [
     "index.js",

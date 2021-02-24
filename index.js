@@ -10,7 +10,7 @@ let makeHot = (...args) => {
 	return makeHot(...args);
 };
 
-const PREFIX = '[rollup-plugin-svelte]';
+const PREFIX = '[vite-plugin-svelte-ssr-hot]';
 const pkg_export_errors = new Set();
 
 const plugin_options = new Set([

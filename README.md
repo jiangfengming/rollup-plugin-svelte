@@ -1,12 +1,14 @@
-# rollup-plugin-svelte [![CI](https://github.com/sveltejs/rollup-plugin-svelte/workflows/CI/badge.svg)](https://github.com/sveltejs/rollup-plugin-svelte/actions)
+# vite-plugin-svelte-ssr-hot
 
-Compile Svelte components.
+Compile Svelte components for Vite.
+Forks from the official [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte).
+Supports HMR (Hot Module Replacement) and SSR (Server-Side Rendering).
 
 
 ## Installation
 
 ```bash
-npm install --save-dev svelte rollup-plugin-svelte
+npm install --save-dev svelte vite-plugin-svelte-ssr-hot
 ```
 
 Note that we need to install Svelte as well as the plugin, as it's a 'peer dependency'.
@@ -15,71 +17,39 @@ Note that we need to install Svelte as well as the plugin, as it's a 'peer depen
 ## Usage
 
 ```js
-// rollup.config.js
-import svelte from 'rollup-plugin-svelte';
-import resolve from '@rollup/plugin-node-resolve';
+// vite.config.js
+import svelte from 'vite-plugin-svelte-ssr-hot';
 
-export default {
-  input: 'src/main.js',
-  output: {
-    file: 'public/bundle.js',
-    format: 'iife'
-  },
-  plugins: [
-    svelte({
-      // By default, all ".svelte" files are compiled
-      extensions: ['.my-custom-extension'],
+export default ({ command }) => {
+  const isDev = command === 'serve';
 
-      // You can restrict which files are compiled
-      // using `include` and `exclude`
-      include: 'src/components/**/*.svelte',
+  return {
+    plugins: [
+      svelte({
+        hot: isDev,
 
-      // Optionally, preprocess components with svelte.preprocess:
-      // https://svelte.dev/docs#svelte_preprocess
-      preprocess: {
-        style: ({ content }) => {
-          return transformStyles(content);
+        compilerOptions: {
+          hydratable: true // true for SSR, false for CSR (Client-Side Rendering)
+          // `generate` option will be auto set.
         }
-      },
+      })
+    ],
+    
+    resolve: {
+      dedupe: ['svelte']
+    },
 
-      // Emit CSS as "files" for other plugins to process. default is true
-      emitCss: false,
+    ssr: {
+      external: ['svelte']
+    },
 
-      // Warnings are normally passed straight to Rollup. You can
-      // optionally handle them here, for example to squelch
-      // warnings with a particular code
-      onwarn: (warning, handler) => {
-        // e.g. don't warn on <marquee> elements, cos they're cool
-        if (warning.code === 'a11y-distracting-elements') return;
+    optimizeDeps: {
+      exclude: ['svelte']
+    }
+  };
+};
 
-        // let Rollup handle all other warnings normally
-        handler(warning);
-      },
-
-      // You can pass any of the Svelte compiler options
-      compilerOptions: {
-
-        // By default, the client-side compiler is used. You
-        // can also use the server-side rendering compiler
-        generate: 'ssr',
-
-        // ensure that extra attributes are added to head
-        // elements for hydration (used with generate: 'ssr')
-        hydratable: true,
-
-        // You can optionally set 'customElement' to 'true' to compile
-        // your components to custom elements (aka web elements)
-        customElement: false
-      }
-    }),
-    // see NOTICE below
-    resolve({ browser: true }),
-    // ...
-  ]
-}
 ```
-
-> **NOTICE:** You will need additional Rollup plugins. <br>Alone, this plugin translates Svelte components into CSS and JavaScript files. <br>You will need to include [`@rollup/plugin-node-resolve`](https://www.npmjs.com/package/@rollup/plugin-node-resolve) – and probably [`@rollup/plugin-commonjs`](https://www.npmjs.com/package/@rollup/plugin-commonjs) – in your Rollup config.
 
 
 ## Preprocessing and dependencies
@@ -112,13 +82,6 @@ export { default as Component2 } from './Component2.svelte';
 ```
 
 and so on. Then, in `package.json`, set the `svelte` property to point to this `index.js` file.
-
-
-## Extracting CSS
-
-By default (when `emitCss: true`) the CSS styles will be emitted into a virtual file, allowing another Rollup plugin – for example, [`rollup-plugin-css-only`](https://www.npmjs.com/package/rollup-plugin-css-only), [`rollup-plugin-postcss`](https://www.npmjs.com/package/rollup-plugin-postcss), etc. – to take responsibility for the new stylesheet. In fact, emitting CSS files _requires_ that you use a Rollup plugin to handle the CSS. Otherwise, your build(s) will fail! This is because this plugin will add an `import` statement to import the emitted CSS file. It's not valid JS to import a CSS file into a JS file, but it allows the CSS to be linked to its respective JS file and is a common pattern that other Rollup CSS plugins know how to handle.
-
-If you set `emitCss: false` and your Svelte components contain `<style>` tags, the compiler will add JavaScript that injects those styles into the page when the component is rendered. That's not the default, because it adds weight to your JavaScript, prevents styles from being fetched in parallel with your code, and can even cause CSP violations.
 
 ## License
 
