@@ -115,6 +115,10 @@ module.exports = function (options = {}) {
 			const filename = path.relative(process.cwd(), id);
 			const svelte_options = { ...compilerOptions, filename };
 
+			if (isSSR) {
+				svelte_options.generate = 'ssr';
+			}
+
 			if (rest.hot) {
 				svelte_options.dev = true;
 			}
@@ -127,6 +131,10 @@ module.exports = function (options = {}) {
 			}
 
 			const compiled = compile(code, svelte_options);
+
+			if (/^;+$/.test(compiled.js.map.mappings)) {
+				compiled.js.map.mappings = '';
+			}
 
 			(compiled.warnings || []).forEach(warning => {
 				if (!emitCss && warning.code === 'css-unused-selector') return;
