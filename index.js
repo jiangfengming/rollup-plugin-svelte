@@ -130,6 +130,15 @@ module.exports = function (options = {}) {
 				code = processed.code;
 			}
 
+			if (isSSR) {
+				const headTag = '<svelte:head>';
+				const preloadTag = `<link rel="preload" data-href="${filename}">`;
+
+				code = code.includes(headTag)
+					? code.replace(headTag, headTag + preloadTag)
+					: headTag + preloadTag + '</svelte:head>' + code;
+			}
+
 			const compiled = compile(code, svelte_options);
 
 			if (/^;+$/.test(compiled.js.map.mappings)) {
