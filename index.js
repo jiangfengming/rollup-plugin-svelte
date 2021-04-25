@@ -3,7 +3,7 @@ const relative = require('require-relative');
 const { createFilter } = require('@rollup/pluginutils');
 const { compile, preprocess, walk } = require('svelte/compiler');
 const { createMakeHot } = require('svelte-hmr');
-const { metrohash64 } = require('metrohash');
+const { fingerprint32 } = require('farmhash');
 
 let makeHot = (...args) => {
 	makeHot = createMakeHot({ walk });
@@ -152,7 +152,7 @@ module.exports = function (options = {}) {
 			});
 
 			if (emitCss && compiled.css.code) {
-				const hash = Buffer.from(metrohash64(compiled.css.code), 'hex')
+				const hash = Buffer.from(fingerprint32(compiled.css.code).toString(16), 'hex')
 					.toString('base64')
 					.replace(/\//g, '_')
 					.replace(/\+/g, '-')
